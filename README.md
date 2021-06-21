@@ -1,3 +1,3 @@
 # python-stuff
 
-Wassup, I make some pythin stuff yeeee
+Wassup, I make some python stuff yeeee
