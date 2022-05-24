@@ -63,7 +63,7 @@ $firstName = Read-Host "First Name"
 $lastName = Read-Host "Last Name"
 
 $group = groupChoose
-
+#check if names and groups are ok:
 if (!$lastName) { 
     Write-Host "Error: No Input" -ForegroundColor Red
     return
@@ -76,6 +76,8 @@ if (!$firstName) {
 }
 $firstName = $firstName.Substring(0, 1).ToUpper() + $firstName.Substring(1)
 
+
+#check if group is ok: (no longer needed)
 if (!$group) { 
     Write-Host "Error: No Input" -ForegroundColor Red
     return
@@ -120,12 +122,12 @@ $email = $firstName + "." + $lastName + "@sigma.com"
 $email = $email -replace '\s', ''
 
 do {
-    if (!(Get-ADUser -Filter "mail -eq '$email'")) {
+    if (!(Get-ADUser -Filter "mail -eq '$email'")) {#email address is free
         #Write-Host "User does not exist."
         $ok2 = $true
 
     }
-    else {
+    else {#email address exists
         $email = $firstName + "." + $lastName + $number2 + "@sigma.com"
         $email = $email -replace '\s', ''
         $number2 ++
@@ -136,7 +138,7 @@ do {
 
 
 
-Invoke-Command -ComputerName SG003S -ScriptBlock {
+Invoke-Command -ComputerName SG003S -ScriptBlock {#run command on sg003s (mail server)
     
         
     do {
@@ -145,12 +147,12 @@ Invoke-Command -ComputerName SG003S -ScriptBlock {
         #convert to plain text, this looks ugly but is the best option
         $mailPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($mailPassword))
 
-        
+        #create API connection
         $hmail = New-Object -ComObject hMailServer.Application
         $hmail.Authenticate('Administrator', "$mailPassword") | Out-Null
         $hmdom = $hmail.Domains.ItemByName("Sigma.com")
         
-        if ($hmdom) {
+        if ($hmdom) {#authentication succsessfully
 
             $hmact = $hmdom.Accounts.Add()
             $hmact.Address = $using:email
@@ -161,11 +163,11 @@ Invoke-Command -ComputerName SG003S -ScriptBlock {
             $hmact.ADUsername = $using:fqn
             $hmact.PersonFirstName = $using:firstName
             $hmact.PersonLastName = $using:lastName 
-            #$hmact.save()
+            $hmact.save()
             $ok3 = $true
             
         }
-        else {
+        else {#authentication wrong
             Write-Host "Falsches Passwort" -ForegroundColor Red
             $ok3 = $false
         }
@@ -213,7 +215,7 @@ New-Item -Path "\\SG002S\Private" `
     -ItemType "directory" `
 | Out-Null
 
-#config rigths for user
+#config rights for user
 $NewAcl = Get-acl -Path "\\SG002S\Private\$fqn"
 
 $container = "ContainerInherit, ObjectInherit"
@@ -234,6 +236,3 @@ Set-ADUser -Identity $userID `
 
 Write-Host "Created User Directory, path is \\SG002S\Private\$fqn" -ForegroundColor Green
 pause
-
-
-
